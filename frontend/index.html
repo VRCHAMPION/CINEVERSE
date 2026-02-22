@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>CineVerse</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<header>
+  <div class="logo">🎬 CineVerse</div>
+  <nav>
+    <a class="active" onclick="setActive(this); loadMovies()">Home</a>
+    <a onclick="setActive(this); loadByType()">Movies</a>
+    <a onclick="setActive(this); loadSeries()">Series</a>
+    <a>My List</a>
+  </nav>
+</header>
+
+<section class="hero">
+  <h1>Discover Your Next Favorite Movie</h1>
+  <input type="text" id="searchInput" placeholder="Search movies...">
+  <div class="filters">
+    <button onclick="filterYear(2000)">2000+</button>
+    <button onclick="filterYear(2010)">2010+</button>
+    <button onclick="filterYear(2020)">2020+</button>
+  </div>
+</section>
+
+<!-- TRENDING SECTION -->
+<section class="trending-section">
+  <h2 class="trending-title">🔥 Trending Now</h2>
+  <div id="trendingContainer" class="trending-strip"></div>
+</section>
+
+<!-- CONTROLS BAR -->
+<div class="controls-bar">
+  <h2 class="sectionTitle" id="sectionTitle">Movies</h2>
+  <div class="controls-right">
+
+    <!-- GENRE FILTER -->
+    <select id="genreSelect" onchange="applyControls()">
+      <option value="">All Genres</option>
+    </select>
+
+    <!-- SORT BY -->
+    <select id="sortSelect" onchange="applyControls()">
+      <option value="default">Default</option>
+      <option value="rating">Top Rated</option>
+      <option value="year_desc">Newest First</option>
+      <option value="year_asc">Oldest First</option>
+      <option value="title">A - Z</option>
+    </select>
+
+  </div>
+</div>
+
+<div id="loadingSpinner" class="spinner-container">
+  <div class="spinner"></div>
+  <p>Loading movies...</p>
+</div>
+
+<div id="moviesContainer" class="grid"></div>
+
+<!-- PAGINATION -->
+<div id="pagination" class="pagination hidden"></div>
+
+<!-- MODAL -->
+<div id="modal" class="modal-overlay hidden">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<script src="script.js"></script>
+
+</body>
+</html>

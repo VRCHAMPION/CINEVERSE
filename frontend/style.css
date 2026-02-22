@@ -1,0 +1,471 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Segoe UI;
+  background: linear-gradient(180deg, #14002e, #3a0d5e);
+  color: white;
+  min-height: 100vh;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 50px;
+  background: #0b001a;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 20px rgba(0,0,0,0.5);
+}
+
+.logo {
+  font-size: 22px;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+nav a {
+  margin-left: 20px;
+  cursor: pointer;
+  opacity: .7;
+  transition: opacity 0.3s;
+}
+
+nav a:hover {
+  opacity: 1;
+}
+
+nav a.active {
+  opacity: 1;
+  font-weight: bold;
+}
+
+.hero {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.hero h1 {
+  font-size: 36px;
+  margin-bottom: 10px;
+  animation: fadeSlideDown 0.8s ease both;
+}
+
+.hero input {
+  width: 400px;
+  padding: 15px;
+  border-radius: 25px;
+  border: none;
+  outline: none;
+  margin-top: 20px;
+  font-size: 16px;
+  animation: fadeSlideDown 0.8s ease 0.2s both;
+  transition: box-shadow 0.3s;
+}
+
+.hero input:focus {
+  box-shadow: 0 0 15px #8c52ff;
+}
+
+.filters {
+  margin-top: 20px;
+  animation: fadeSlideDown 0.8s ease 0.4s both;
+}
+
+.filters button {
+  margin: 5px;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  background: #5c2cff;
+  color: white;
+  font-size: 14px;
+  transition: background 0.3s, transform 0.2s;
+}
+
+.filters button:hover {
+  background: #7c4dff;
+  transform: scale(1.05);
+}
+
+.sectionTitle {
+  margin-left: 50px;
+  animation: fadeSlideDown 0.6s ease both;
+}
+
+/* ===== SPINNER ===== */
+.spinner-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid rgba(255,255,255,0.1);
+  border-top: 5px solid #8c52ff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.spinner-container p {
+  margin-top: 15px;
+  opacity: 0.6;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* ===== GRID ===== */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 25px;
+  padding: 30px 50px;
+}
+
+/* ===== CARD ===== */
+.card {
+  background: #1a0033;
+  border-radius: 15px;
+  overflow: hidden;
+  transition: transform 0.3s, box-shadow 0.3s;
+  cursor: pointer;
+  animation: fadeScaleIn 0.5s ease both;
+}
+
+.card:hover {
+  transform: scale(1.05) translateY(-5px);
+  box-shadow: 0 10px 30px rgba(140, 82, 255, 0.5);
+}
+
+/* ===== PLACEHOLDER POSTER ===== */
+.no-poster {
+  width: 100%;
+  height: 280px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.poster-initial {
+  font-size: 80px;
+  font-weight: bold;
+  color: rgba(255,255,255,0.85);
+  text-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+/* ===== CARD INFO ===== */
+.card-info {
+  padding: 12px 15px;
+}
+
+.title {
+  font-size: 15px;
+  font-weight: bold;
+  margin-bottom: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.year {
+  opacity: .6;
+  font-size: 13px;
+}
+
+.rating {
+  margin-top: 6px;
+  font-size: 13px;
+  color: #f5c518;
+}
+
+.error {
+  text-align: center;
+  color: #ff8080;
+  font-size: 20px;
+  padding: 60px;
+  grid-column: 1 / -1;
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes fadeSlideDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeScaleIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to   { opacity: 1; transform: scale(1); }
+}
+/* ===== TRENDING SECTION ===== */
+.trending-section {
+  padding: 10px 50px 30px;
+}
+
+.trending-title {
+  font-size: 22px;
+  margin-bottom: 15px;
+  animation: fadeSlideDown 0.6s ease both;
+}
+
+.trending-strip {
+  display: flex;
+  gap: 15px;
+  overflow-x: auto;
+  padding-bottom: 10px;
+  scrollbar-width: thin;
+  scrollbar-color: #5c2cff transparent;
+}
+
+.trending-strip::-webkit-scrollbar {
+  height: 5px;
+}
+
+.trending-strip::-webkit-scrollbar-thumb {
+  background: #5c2cff;
+  border-radius: 10px;
+}
+
+.trending-card {
+  min-width: 150px;
+  background: #1a0033;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: transform 0.3s, box-shadow 0.3s;
+  animation: fadeScaleIn 0.5s ease both;
+}
+
+.trending-card:hover {
+  transform: scale(1.07) translateY(-5px);
+  box-shadow: 0 10px 25px rgba(140, 82, 255, 0.5);
+}
+
+.trending-poster {
+  width: 100%;
+  height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.trending-rank {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  font-size: 13px;
+  font-weight: bold;
+  background: rgba(0,0,0,0.5);
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.trending-initial {
+  font-size: 60px;
+  font-weight: bold;
+  color: rgba(255,255,255,0.85);
+  text-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+.trending-info {
+  padding: 10px 12px;
+}
+
+.trending-name {
+  font-size: 13px;
+  font-weight: bold;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.trending-meta {
+  font-size: 12px;
+  opacity: 0.6;
+  margin-top: 4px;
+}
+/* ===== MODAL ===== */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  animation: fadeIn 0.3s ease;
+}
+
+.modal-box {
+  background: #1a0033;
+  border-radius: 20px;
+  padding: 40px;
+  width: 500px;
+  max-width: 90%;
+  position: relative;
+  animation: fadeScaleIn 0.3s ease;
+  border: 1px solid #5c2cff;
+  box-shadow: 0 0 40px rgba(92, 44, 255, 0.4);
+}
+
+.modal-close {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.modal-close:hover {
+  opacity: 1;
+}
+
+.modal-title {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 15px;
+}
+
+.modal-poster {
+  width: 100%;
+  height: 200px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 80px;
+  font-weight: bold;
+  color: rgba(255,255,255,0.85);
+  margin-bottom: 20px;
+}
+
+.modal-info {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.modal-info-item {
+  background: #2a0050;
+  padding: 12px 15px;
+  border-radius: 10px;
+}
+
+.modal-info-label {
+  font-size: 11px;
+  opacity: 0.6;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+}
+
+.modal-info-value {
+  font-size: 15px;
+  font-weight: bold;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+/* ===== CONTROLS BAR ===== */
+.controls-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 50px;
+  margin-top: 10px;
+}
+
+.controls-right {
+  display: flex;
+  gap: 10px;
+}
+
+.controls-right select {
+  padding: 8px 14px;
+  border-radius: 20px;
+  border: none;
+  outline: none;
+  background: #2a0050;
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.controls-right select:hover {
+  background: #5c2cff;
+}
+
+.controls-right select option {
+  background: #1a0033;
+}
+
+/* ===== PAGINATION ===== */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: 30px 50px;
+  flex-wrap: wrap;
+}
+
+.pagination button {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 10px;
+  background: #2a0050;
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.pagination button:hover:not(:disabled) {
+  background: #5c2cff;
+  transform: scale(1.05);
+}
+
+.pagination button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.pagination button.active-page {
+  background: #5c2cff;
+  font-weight: bold;
+  box-shadow: 0 0 10px rgba(92, 44, 255, 0.6);
+}
+
+.pagination-dots {
+  color: white;
+  opacity: 0.5;
+  font-size: 16px;
+  padding: 0 4px;
+}
