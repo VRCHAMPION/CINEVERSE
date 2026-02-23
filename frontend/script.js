@@ -3,12 +3,11 @@ const spinner = document.getElementById("loadingSpinner")
 const trendingContainer = document.getElementById("trendingContainer")
 const paginationEl = document.getElementById("pagination")
 
-// ===== TMDB =====
-const TMDB_KEY = "274142dd5bf0d8ed664aef1cb1d9d514"
-const TMDB_BASE = "https://api.themoviedb.org/3/search/movie"
-const TMDB_IMG = "https://image.tmdb.org/t/p/w300"
+// ===== OMDb API =====
+const OMDB_KEY = "e340602f"
+const OMDB_BASE = "https://www.omdbapi.com"
 
-// ===== POSTER CACHE (saves API requests) =====
+// ===== POSTER CACHE =====
 const posterCache = {}
 
 const gradients = [
@@ -65,19 +64,19 @@ function applyControls(){
   else if(currentMode === "filter") filterYear(currentYear)
 }
 
-// ===== FETCH POSTER FROM TMDB =====
+// ===== FETCH POSTER FROM OMDb =====
 async function getPoster(title, year){
   const cacheKey = `${title}-${year}`
   if(posterCache[cacheKey] !== undefined) return posterCache[cacheKey]
 
   try{
-    const url = `${TMDB_BASE}?api_key=${TMDB_KEY}&query=${encodeURIComponent(title)}&year=${year}`
+    const url = `${OMDB_BASE}/?apikey=${OMDB_KEY}&t=${encodeURIComponent(title)}&y=${year}&type=movie`
     const res = await fetch(url)
     const data = await res.json()
-    if(data.results && data.results.length > 0 && data.results[0].poster_path){
-      const poster = `${TMDB_IMG}${data.results[0].poster_path}`
-      posterCache[cacheKey] = poster
-      return poster
+
+    if(data.Poster && data.Poster !== "N/A"){
+      posterCache[cacheKey] = data.Poster
+      return data.Poster
     }
   }catch(e){}
 
@@ -113,29 +112,19 @@ async function loadTrending(){
 
     trendingContainer.innerHTML = ""
 
-    // fetch posters in parallel
-    const posters = await Promise.all(
-      movies.map(m => getPoster(m.primarytitle, m.startyear))
-    )
-
     movies.forEach((movie, i) => {
       const gradient = gradients[i % gradients.length]
       const initial = movie.primarytitle.charAt(0).toUpperCase()
-      const poster = posters[i]
-
-      const posterHTML = poster
-        ? `<img src="${poster}" alt="${movie.primarytitle}" loading="lazy">`
-        : `<div class="trending-placeholder" style="background:${gradient}">
-             <span class="trending-initial">${initial}</span>
-           </div>`
 
       const card = document.createElement("div")
       card.className = "trending-card"
       card.style.animationDelay = `${i * 0.08}s`
       card.innerHTML = `
-        <div class="trending-poster">
+        <div class="trending-poster" id="tposter-${i}">
           <span class="trending-rank">#${i + 1}</span>
-          ${posterHTML}
+          <div class="trending-placeholder" style="background:${gradient}">
+            <span class="trending-initial">${initial}</span>
+          </div>
         </div>
         <div class="trending-info">
           <div class="trending-name">${movie.primarytitle}</div>
@@ -143,10 +132,23 @@ async function loadTrending(){
         </div>
       `
       if(movie.tconst){
-        card.addEventListener("click", () => openModal(movie.tconst, gradient, poster))
+        card.addEventListener("click", () => openModal(movie.tconst, gradient, null))
       }
       trendingContainer.appendChild(card)
     })
+
+    // load posters in background
+    movies.forEach(async (movie, i) => {
+      const poster = await getPoster(movie.primarytitle, movie.startyear)
+      if(poster){
+        const el = document.getElementById(`tposter-${i}`)
+        if(el){
+          const rank = el.querySelector(".trending-rank").outerHTML
+          el.innerHTML = `${rank}<img src="${poster}" alt="${movie.primarytitle}" class="trending-img poster-fadein">`
+        }
+      }
+    })
+
   }catch(err){
     console.log("Trending failed", err)
   }
@@ -167,10 +169,10 @@ async function showMovies(movies, pages){
   totalPages = pages || 1
   container.innerHTML = ""
 
-  // Step 1 — show all cards immediately with gradient placeholders
   const cardElements = []
   const posterTracker = {}
 
+  // show cards immediately with placeholders
   movies.forEach((movie, i) => {
     const gradient = gradients[i % gradients.length]
     const initial = movie.primarytitle.charAt(0).toUpperCase()
@@ -194,33 +196,32 @@ async function showMovies(movies, pages){
     `
     card.addEventListener("click", () => openModal(movie.tconst, gradient, posterTracker[i]))
     container.appendChild(card)
-    cardElements.push({ card, movie, gradient, index: i })
+    cardElements.push({ movie, index: i })
   })
 
-  // Show cards immediately — don't wait for posters
   hideSpinner()
   renderPagination()
 
-  // Step 2 — load posters in background one by one
-  for(let i = 0; i < cardElements.length; i++){
-    const { movie, index } = cardElements[i]
+  // load posters in background
+  cardElements.forEach(async ({ movie, index }) => {
     const poster = await getPoster(movie.primarytitle, movie.startyear)
     posterTracker[index] = poster
 
     if(poster){
       const posterEl = document.getElementById(`poster-${index}`)
       if(posterEl){
-        const img = document.createElement("img")
+        const img = new Image()
         img.src = poster
         img.alt = movie.primarytitle
         img.className = "card-poster poster-fadein"
         img.onload = () => {
           posterEl.innerHTML = ""
+          posterEl.style.background = "none"
           posterEl.appendChild(img)
         }
       }
     }
-  }
+  })
 }
 
 function showError(msg){
@@ -376,8 +377,11 @@ async function openModal(tconst, gradient, poster){
     const movie = await res.json()
     const initial = movie.primarytitle.charAt(0).toUpperCase()
 
-    const posterHTML = poster
-      ? `<img src="${poster}" alt="${movie.primarytitle}" class="modal-poster-img">`
+    // fetch poster if not already available
+    const finalPoster = poster || await getPoster(movie.primarytitle, movie.startyear)
+
+    const posterHTML = finalPoster
+      ? `<img src="${finalPoster}" alt="${movie.primarytitle}" class="modal-poster-img">`
       : `<div class="modal-poster" style="background: ${gradient}">${initial}</div>`
 
     document.getElementById("modalContent").innerHTML = `
