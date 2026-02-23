@@ -781,3 +781,40 @@ nav a:hover::after, nav a.active::after {
   50% { content: '..'; }
   75% { content: '...'; }
 }
+
+/* ===== POSTER IMAGES ===== */
+.card-poster {
+  width: 100%;
+  height: 260px;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.3s;
+}
+
+.card:hover .card-poster {
+  transform: scale(1.05);
+}
+
+.trending-poster img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  display: block;
+}
+
+.trending-placeholder {
+  width: 100%;
+  height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-poster-img {
+  width: 100%;
+  height: 250px;
+  object-fit: cover;
+  border-radius: 4px;
+  margin-bottom: 25px;
+  display: block;
+}

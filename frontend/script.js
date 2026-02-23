@@ -3,6 +3,14 @@ const spinner = document.getElementById("loadingSpinner")
 const trendingContainer = document.getElementById("trendingContainer")
 const paginationEl = document.getElementById("pagination")
 
+// ===== TMDB =====
+const TMDB_KEY = "274142dd5bf0d8ed664aef1cb1d9d514"
+const TMDB_BASE = "https://api.themoviedb.org/3/search/movie"
+const TMDB_IMG = "https://image.tmdb.org/t/p/w300"
+
+// ===== POSTER CACHE (saves API requests) =====
+const posterCache = {}
+
 const gradients = [
   "linear-gradient(135deg, #0d2137, #0a4a6e)",
   "linear-gradient(135deg, #1a0a2e, #4a0a6e)",
@@ -57,6 +65,26 @@ function applyControls(){
   else if(currentMode === "filter") filterYear(currentYear)
 }
 
+// ===== FETCH POSTER FROM TMDB =====
+async function getPoster(title, year){
+  const cacheKey = `${title}-${year}`
+  if(posterCache[cacheKey] !== undefined) return posterCache[cacheKey]
+
+  try{
+    const url = `${TMDB_BASE}?api_key=${TMDB_KEY}&query=${encodeURIComponent(title)}&year=${year}`
+    const res = await fetch(url)
+    const data = await res.json()
+    if(data.results && data.results.length > 0 && data.results[0].poster_path){
+      const poster = `${TMDB_IMG}${data.results[0].poster_path}`
+      posterCache[cacheKey] = poster
+      return poster
+    }
+  }catch(e){}
+
+  posterCache[cacheKey] = null
+  return null
+}
+
 // ===== LOAD GENRES =====
 async function loadGenres(){
   try{
@@ -85,17 +113,29 @@ async function loadTrending(){
 
     trendingContainer.innerHTML = ""
 
+    // fetch posters in parallel
+    const posters = await Promise.all(
+      movies.map(m => getPoster(m.primarytitle, m.startyear))
+    )
+
     movies.forEach((movie, i) => {
       const gradient = gradients[i % gradients.length]
       const initial = movie.primarytitle.charAt(0).toUpperCase()
+      const poster = posters[i]
+
+      const posterHTML = poster
+        ? `<img src="${poster}" alt="${movie.primarytitle}" loading="lazy">`
+        : `<div class="trending-placeholder" style="background:${gradient}">
+             <span class="trending-initial">${initial}</span>
+           </div>`
 
       const card = document.createElement("div")
       card.className = "trending-card"
       card.style.animationDelay = `${i * 0.08}s`
       card.innerHTML = `
-        <div class="trending-poster" style="background: ${gradient}">
+        <div class="trending-poster">
           <span class="trending-rank">#${i + 1}</span>
-          <span class="trending-initial">${initial}</span>
+          ${posterHTML}
         </div>
         <div class="trending-info">
           <div class="trending-name">${movie.primarytitle}</div>
@@ -103,7 +143,7 @@ async function loadTrending(){
         </div>
       `
       if(movie.tconst){
-        card.addEventListener("click", () => openModal(movie.tconst, gradient))
+        card.addEventListener("click", () => openModal(movie.tconst, gradient, poster))
       }
       trendingContainer.appendChild(card)
     })
@@ -113,7 +153,7 @@ async function loadTrending(){
 }
 
 // ===== SHOW MOVIES =====
-function showMovies(movies, pages){
+async function showMovies(movies, pages){
   if(!Array.isArray(movies)){
     showError("ERROR: COULD NOT LOAD TITLES")
     return
@@ -127,28 +167,38 @@ function showMovies(movies, pages){
   totalPages = pages || 1
   container.innerHTML = ""
 
+  // fetch all posters in parallel
+  const posters = await Promise.all(
+    movies.map(m => getPoster(m.primarytitle, m.startyear))
+  )
+
   movies.forEach((movie, i) => {
     const gradient = gradients[i % gradients.length]
     const initial = movie.primarytitle.charAt(0).toUpperCase()
+    const poster = posters[i]
 
     const ratingHTML = movie.averagerating
       ? `<div class="rating">★ ${movie.averagerating}</div>`
       : ""
 
+    const posterHTML = poster
+      ? `<img src="${poster}" alt="${movie.primarytitle}" loading="lazy" class="card-poster">`
+      : `<div class="no-poster" style="background: ${gradient}">
+           <span class="poster-initial">${initial}</span>
+         </div>`
+
     const card = document.createElement("div")
     card.className = "card"
     card.style.animationDelay = `${i * 0.04}s`
     card.innerHTML = `
-      <div class="no-poster" style="background: ${gradient}">
-        <span class="poster-initial">${initial}</span>
-      </div>
+      ${posterHTML}
       <div class="card-info">
         <div class="title">${movie.primarytitle}</div>
         <div class="year">${movie.startyear || "N/A"}</div>
         ${ratingHTML}
       </div>
     `
-    card.addEventListener("click", () => openModal(movie.tconst, gradient))
+    card.addEventListener("click", () => openModal(movie.tconst, gradient, poster))
     container.appendChild(card)
   })
 
@@ -224,7 +274,7 @@ async function loadMovies(){
   try{
     const res = await fetch(`http://127.0.0.1:3000/movies?page=${currentPage}&sort=${getSort()}`)
     const data = await res.json()
-    showMovies(data.results, data.totalPages)
+    await showMovies(data.results, data.totalPages)
   }catch(err){
     showError("SERVER NOT RUNNING")
   }
@@ -237,7 +287,7 @@ async function loadByType(){
   try{
     const res = await fetch(`http://127.0.0.1:3000/movies/type?page=${currentPage}&sort=${getSort()}`)
     const data = await res.json()
-    showMovies(data.results, data.totalPages)
+    await showMovies(data.results, data.totalPages)
   }catch(err){
     showError("COULD NOT LOAD MOVIES")
   }
@@ -250,7 +300,7 @@ async function loadSeries(){
   try{
     const res = await fetch(`http://127.0.0.1:3000/series?page=${currentPage}&sort=${getSort()}`)
     const data = await res.json()
-    showMovies(data.results, data.totalPages)
+    await showMovies(data.results, data.totalPages)
   }catch(err){
     showError("COULD NOT LOAD SERIES")
   }
@@ -277,7 +327,7 @@ async function searchMovies(){
     try{
       const res = await fetch(`http://127.0.0.1:3000/search?title=${encodeURIComponent(text)}&page=${currentPage}`)
       const data = await res.json()
-      showMovies(data.results, data.totalPages)
+      await showMovies(data.results, data.totalPages)
     }catch{
       showError("SEARCH FAILED")
     }
@@ -295,22 +345,26 @@ async function filterYear(year){
     const sort = getSort()
     const res = await fetch(`http://127.0.0.1:3000/filter?year=${year}&rating=0&page=${currentPage}&sort=${sort}&genre=${encodeURIComponent(genre)}`)
     const data = await res.json()
-    showMovies(data.results, data.totalPages)
+    await showMovies(data.results, data.totalPages)
   }catch{
     showError("FILTER FAILED")
   }
 }
 
 // ===== OPEN MODAL =====
-async function openModal(tconst, gradient){
+async function openModal(tconst, gradient, poster){
   if(!tconst) return
   try{
     const res = await fetch(`http://127.0.0.1:3000/details/${tconst}`)
     const movie = await res.json()
     const initial = movie.primarytitle.charAt(0).toUpperCase()
 
+    const posterHTML = poster
+      ? `<img src="${poster}" alt="${movie.primarytitle}" class="modal-poster-img">`
+      : `<div class="modal-poster" style="background: ${gradient}">${initial}</div>`
+
     document.getElementById("modalContent").innerHTML = `
-      <div class="modal-poster" style="background: ${gradient}">${initial}</div>
+      ${posterHTML}
       <div class="modal-title">${movie.primarytitle}</div>
       <div class="modal-info">
         <div class="modal-info-item">
