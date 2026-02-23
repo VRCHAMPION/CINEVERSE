@@ -818,3 +818,13 @@ nav a:hover::after, nav a.active::after {
   margin-bottom: 25px;
   display: block;
 }
+
+/* ===== POSTER FADE IN ===== */
+.poster-fadein {
+  animation: posterFade 0.5s ease both;
+}
+
+@keyframes posterFade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}

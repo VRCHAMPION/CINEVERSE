@@ -167,43 +167,60 @@ async function showMovies(movies, pages){
   totalPages = pages || 1
   container.innerHTML = ""
 
-  // fetch all posters in parallel
-  const posters = await Promise.all(
-    movies.map(m => getPoster(m.primarytitle, m.startyear))
-  )
+  // Step 1 — show all cards immediately with gradient placeholders
+  const cardElements = []
+  const posterTracker = {}
 
   movies.forEach((movie, i) => {
     const gradient = gradients[i % gradients.length]
     const initial = movie.primarytitle.charAt(0).toUpperCase()
-    const poster = posters[i]
 
     const ratingHTML = movie.averagerating
       ? `<div class="rating">★ ${movie.averagerating}</div>`
       : ""
 
-    const posterHTML = poster
-      ? `<img src="${poster}" alt="${movie.primarytitle}" loading="lazy" class="card-poster">`
-      : `<div class="no-poster" style="background: ${gradient}">
-           <span class="poster-initial">${initial}</span>
-         </div>`
-
     const card = document.createElement("div")
     card.className = "card"
     card.style.animationDelay = `${i * 0.04}s`
     card.innerHTML = `
-      ${posterHTML}
+      <div class="no-poster" style="background: ${gradient}" id="poster-${i}">
+        <span class="poster-initial">${initial}</span>
+      </div>
       <div class="card-info">
         <div class="title">${movie.primarytitle}</div>
         <div class="year">${movie.startyear || "N/A"}</div>
         ${ratingHTML}
       </div>
     `
-    card.addEventListener("click", () => openModal(movie.tconst, gradient, poster))
+    card.addEventListener("click", () => openModal(movie.tconst, gradient, posterTracker[i]))
     container.appendChild(card)
+    cardElements.push({ card, movie, gradient, index: i })
   })
 
+  // Show cards immediately — don't wait for posters
   hideSpinner()
   renderPagination()
+
+  // Step 2 — load posters in background one by one
+  for(let i = 0; i < cardElements.length; i++){
+    const { movie, index } = cardElements[i]
+    const poster = await getPoster(movie.primarytitle, movie.startyear)
+    posterTracker[index] = poster
+
+    if(poster){
+      const posterEl = document.getElementById(`poster-${index}`)
+      if(posterEl){
+        const img = document.createElement("img")
+        img.src = poster
+        img.alt = movie.primarytitle
+        img.className = "card-poster poster-fadein"
+        img.onload = () => {
+          posterEl.innerHTML = ""
+          posterEl.appendChild(img)
+        }
+      }
+    }
+  }
 }
 
 function showError(msg){
