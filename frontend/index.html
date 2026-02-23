@@ -1,65 +1,106 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CineVerse</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
+<!-- BACKGROUND EFFECTS -->
+<div class="bg-grid"></div>
+<div class="bg-glow"></div>
+<div class="scanline"></div>
+
+<!-- HEADER -->
 <header>
-  <div class="logo">🎬 CineVerse</div>
+  <div class="logo">
+    <span class="logo-icon">▶</span>
+    <span class="logo-text">CINE<span class="logo-accent">VERSE</span></span>
+  </div>
   <nav>
-    <a class="active" onclick="setActive(this); loadMovies()">Home</a>
-    <a onclick="setActive(this); loadByType()">Movies</a>
-    <a onclick="setActive(this); loadSeries()">Series</a>
-    <a>My List</a>
+    <a class="active" onclick="setActive(this); loadMovies()">HOME</a>
+    <a onclick="setActive(this); loadByType()">MOVIES</a>
+    <a onclick="setActive(this); loadSeries()">SERIES</a>
+    <a>MY LIST</a>
   </nav>
+  <div class="header-line"></div>
 </header>
 
+<!-- HERO -->
 <section class="hero">
-  <h1>Discover Your Next Favorite Movie</h1>
-  <input type="text" id="searchInput" placeholder="Search movies...">
+  <div class="hero-tag">// DISCOVER YOUR UNIVERSE</div>
+  <h1 class="hero-title">
+    <span class="hero-line1">FIND YOUR</span>
+    <span class="hero-line2">NEXT FAVORITE</span>
+    <span class="hero-line3">MOVIE<span class="cursor-blink">_</span></span>
+  </h1>
+
+  <div class="search-wrapper">
+    <span class="search-icon">⌕</span>
+    <input type="text" id="searchInput" placeholder="SEARCH TITLES...">
+    <div class="search-border"></div>
+  </div>
+
   <div class="filters">
-    <button onclick="filterYear(2000)">2000+</button>
-    <button onclick="filterYear(2010)">2010+</button>
-    <button onclick="filterYear(2020)">2020+</button>
+    <button onclick="filterYear(2000)" class="filter-btn">
+      <span class="filter-year">2000</span>
+      <span class="filter-plus">+</span>
+    </button>
+    <button onclick="filterYear(2010)" class="filter-btn">
+      <span class="filter-year">2010</span>
+      <span class="filter-plus">+</span>
+    </button>
+    <button onclick="filterYear(2020)" class="filter-btn">
+      <span class="filter-year">2020</span>
+      <span class="filter-plus">+</span>
+    </button>
   </div>
 </section>
 
-<!-- TRENDING SECTION -->
+<!-- TRENDING -->
 <section class="trending-section">
-  <h2 class="trending-title">🔥 Trending Now</h2>
+  <div class="section-header">
+    <div class="section-tag">01</div>
+    <h2 class="section-label">TRENDING NOW</h2>
+    <div class="section-line"></div>
+  </div>
   <div id="trendingContainer" class="trending-strip"></div>
 </section>
 
-<!-- CONTROLS BAR -->
+<!-- CONTROLS -->
 <div class="controls-bar">
-  <h2 class="sectionTitle" id="sectionTitle">Movies</h2>
+  <div class="section-header">
+    <div class="section-tag">02</div>
+    <h2 class="section-label" id="sectionTitle">ALL TITLES</h2>
+    <div class="section-line"></div>
+  </div>
   <div class="controls-right">
-
-    <!-- GENRE FILTER -->
     <select id="genreSelect" onchange="applyControls()">
-      <option value="">All Genres</option>
+      <option value="">ALL GENRES</option>
     </select>
-
-    <!-- SORT BY -->
     <select id="sortSelect" onchange="applyControls()">
-      <option value="default">Default</option>
-      <option value="rating">Top Rated</option>
-      <option value="year_desc">Newest First</option>
-      <option value="year_asc">Oldest First</option>
-      <option value="title">A - Z</option>
+      <option value="default">DEFAULT</option>
+      <option value="rating">TOP RATED</option>
+      <option value="year_desc">NEWEST</option>
+      <option value="year_asc">OLDEST</option>
+      <option value="title">A — Z</option>
     </select>
-
   </div>
 </div>
 
+<!-- SPINNER -->
 <div id="loadingSpinner" class="spinner-container">
-  <div class="spinner"></div>
-  <p>Loading movies...</p>
+  <div class="spinner-ring"></div>
+  <div class="spinner-ring ring2"></div>
+  <div class="spinner-ring ring3"></div>
+  <p class="spinner-text">LOADING<span class="dots">...</span></p>
 </div>
 
+<!-- GRID -->
 <div id="moviesContainer" class="grid"></div>
 
 <!-- PAGINATION -->
@@ -74,6 +115,5 @@
 </div>
 
 <script src="script.js"></script>
-
 </body>
 </html>

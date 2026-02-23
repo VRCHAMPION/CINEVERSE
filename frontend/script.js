@@ -4,20 +4,20 @@ const trendingContainer = document.getElementById("trendingContainer")
 const paginationEl = document.getElementById("pagination")
 
 const gradients = [
-  "linear-gradient(135deg, #f953c6, #b91d73)",
-  "linear-gradient(135deg, #4facfe, #00f2fe)",
-  "linear-gradient(135deg, #43e97b, #38f9d7)",
-  "linear-gradient(135deg, #fa709a, #fee140)",
-  "linear-gradient(135deg, #a18cd1, #fbc2eb)",
-  "linear-gradient(135deg, #ff9a9e, #fad0c4)",
-  "linear-gradient(135deg, #ffecd2, #fcb69f)",
-  "linear-gradient(135deg, #667eea, #764ba2)",
-  "linear-gradient(135deg, #f77062, #fe5196)",
-  "linear-gradient(135deg, #2af598, #009efd)",
+  "linear-gradient(135deg, #0d2137, #0a4a6e)",
+  "linear-gradient(135deg, #1a0a2e, #4a0a6e)",
+  "linear-gradient(135deg, #0a2e1a, #0a6e4a)",
+  "linear-gradient(135deg, #2e0a0a, #6e1a0a)",
+  "linear-gradient(135deg, #0a1a2e, #0a2e6e)",
+  "linear-gradient(135deg, #2e1a0a, #6e3a0a)",
+  "linear-gradient(135deg, #1a2e0a, #3a6e0a)",
+  "linear-gradient(135deg, #0a2e2e, #0a5e6e)",
+  "linear-gradient(135deg, #2e0a2e, #5e0a6e)",
+  "linear-gradient(135deg, #1a1a2e, #2a2a6e)",
 ]
 
 // ===== STATE =====
-let currentMode = "home"   // home | movies | series | search | filter
+let currentMode = "home"
 let currentPage = 1
 let currentSearch = ""
 let currentYear = 0
@@ -44,15 +44,10 @@ function setActive(el){
 }
 
 // ===== GET CONTROLS =====
-function getSort(){
-  return document.getElementById("sortSelect").value
-}
+function getSort(){ return document.getElementById("sortSelect").value }
+function getGenre(){ return document.getElementById("genreSelect").value }
 
-function getGenre(){
-  return document.getElementById("genreSelect").value
-}
-
-// ===== APPLY CONTROLS (genre or sort changed) =====
+// ===== APPLY CONTROLS =====
 function applyControls(){
   currentPage = 1
   if(currentMode === "home") loadMovies()
@@ -104,7 +99,7 @@ async function loadTrending(){
         </div>
         <div class="trending-info">
           <div class="trending-name">${movie.primarytitle}</div>
-          <div class="trending-meta">${movie.startyear} &nbsp;⭐ ${movie.averagerating}</div>
+          <div class="trending-meta">${movie.startyear} &nbsp;★ ${movie.averagerating}</div>
         </div>
       `
       if(movie.tconst){
@@ -112,7 +107,6 @@ async function loadTrending(){
       }
       trendingContainer.appendChild(card)
     })
-
   }catch(err){
     console.log("Trending failed", err)
   }
@@ -121,12 +115,12 @@ async function loadTrending(){
 // ===== SHOW MOVIES =====
 function showMovies(movies, pages){
   if(!Array.isArray(movies)){
-    showError("Error loading movies from server")
+    showError("ERROR: COULD NOT LOAD TITLES")
     return
   }
 
   if(movies.length === 0){
-    showError("No movies found")
+    showError("NO TITLES FOUND")
     return
   }
 
@@ -138,19 +132,19 @@ function showMovies(movies, pages){
     const initial = movie.primarytitle.charAt(0).toUpperCase()
 
     const ratingHTML = movie.averagerating
-      ? `<div class="rating">⭐ ${movie.averagerating}</div>`
+      ? `<div class="rating">★ ${movie.averagerating}</div>`
       : ""
 
     const card = document.createElement("div")
     card.className = "card"
-    card.style.animationDelay = `${i * 0.05}s`
+    card.style.animationDelay = `${i * 0.04}s`
     card.innerHTML = `
       <div class="no-poster" style="background: ${gradient}">
         <span class="poster-initial">${initial}</span>
       </div>
       <div class="card-info">
         <div class="title">${movie.primarytitle}</div>
-        <div class="year">${movie.startyear}</div>
+        <div class="year">${movie.startyear || "N/A"}</div>
         ${ratingHTML}
       </div>
     `
@@ -164,28 +158,23 @@ function showMovies(movies, pages){
 
 function showError(msg){
   hideSpinner()
-  container.innerHTML = `<div class="error">${msg}</div>`
+  container.innerHTML = `<div class="error">// ${msg}</div>`
   paginationEl.classList.add("hidden")
 }
 
 // ===== PAGINATION =====
 function renderPagination(){
-  if(totalPages <= 1){
-    paginationEl.classList.add("hidden")
-    return
-  }
+  if(totalPages <= 1){ paginationEl.classList.add("hidden"); return }
 
   paginationEl.classList.remove("hidden")
   paginationEl.innerHTML = ""
 
-  // Prev button
   const prev = document.createElement("button")
-  prev.textContent = "← Prev"
+  prev.textContent = "← PREV"
   prev.disabled = currentPage === 1
   prev.onclick = () => { currentPage--; applyControls() }
   paginationEl.appendChild(prev)
 
-  // Page numbers
   let startPage = Math.max(1, currentPage - 2)
   let endPage = Math.min(totalPages, currentPage + 2)
 
@@ -199,9 +188,7 @@ function renderPagination(){
     }
   }
 
-  for(let i = startPage; i <= endPage; i++){
-    addPageBtn(i)
-  }
+  for(let i = startPage; i <= endPage; i++) addPageBtn(i)
 
   if(endPage < totalPages){
     if(endPage < totalPages - 1){
@@ -213,15 +200,13 @@ function renderPagination(){
     addPageBtn(totalPages)
   }
 
-  // Next button
   const next = document.createElement("button")
-  next.textContent = "Next →"
+  next.textContent = "NEXT →"
   next.disabled = currentPage === totalPages
   next.onclick = () => { currentPage++; applyControls() }
   paginationEl.appendChild(next)
 
-  // Scroll to top of grid
-  window.scrollTo({ top: document.getElementById("sectionTitle").offsetTop - 80, behavior: "smooth" })
+  window.scrollTo({ top: document.querySelector(".controls-bar").offsetTop - 80, behavior: "smooth" })
 }
 
 function addPageBtn(num){
@@ -232,7 +217,7 @@ function addPageBtn(num){
   paginationEl.appendChild(btn)
 }
 
-// ===== LOAD ALL MOVIES =====
+// ===== LOAD MOVIES =====
 async function loadMovies(){
   currentMode = "home"
   showSpinner()
@@ -241,7 +226,7 @@ async function loadMovies(){
     const data = await res.json()
     showMovies(data.results, data.totalPages)
   }catch(err){
-    showError("Server not running")
+    showError("SERVER NOT RUNNING")
   }
 }
 
@@ -254,7 +239,7 @@ async function loadByType(){
     const data = await res.json()
     showMovies(data.results, data.totalPages)
   }catch(err){
-    showError("Could not load movies")
+    showError("COULD NOT LOAD MOVIES")
   }
 }
 
@@ -267,17 +252,16 @@ async function loadSeries(){
     const data = await res.json()
     showMovies(data.results, data.totalPages)
   }catch(err){
-    showError("Could not load series")
+    showError("COULD NOT LOAD SERIES")
   }
 }
 
-// ===== SEARCH WITH DEBOUNCE =====
+// ===== SEARCH =====
 let debounceTimer
 
 async function searchMovies(){
   const text = document.getElementById("searchInput").value
   currentSearch = text
-
   clearTimeout(debounceTimer)
 
   if(text.trim() === ""){
@@ -295,7 +279,7 @@ async function searchMovies(){
       const data = await res.json()
       showMovies(data.results, data.totalPages)
     }catch{
-      showError("Search failed")
+      showError("SEARCH FAILED")
     }
   }, 400)
 }
@@ -313,7 +297,7 @@ async function filterYear(year){
     const data = await res.json()
     showMovies(data.results, data.totalPages)
   }catch{
-    showError("Filter failed")
+    showError("FILTER FAILED")
   }
 }
 
@@ -323,42 +307,38 @@ async function openModal(tconst, gradient){
   try{
     const res = await fetch(`http://127.0.0.1:3000/details/${tconst}`)
     const movie = await res.json()
-
     const initial = movie.primarytitle.charAt(0).toUpperCase()
 
     document.getElementById("modalContent").innerHTML = `
-      <div class="modal-poster" style="background: ${gradient}">
-        ${initial}
-      </div>
+      <div class="modal-poster" style="background: ${gradient}">${initial}</div>
       <div class="modal-title">${movie.primarytitle}</div>
       <div class="modal-info">
         <div class="modal-info-item">
-          <div class="modal-info-label">Year</div>
+          <div class="modal-info-label">YEAR</div>
           <div class="modal-info-value">${movie.startyear || "N/A"}</div>
         </div>
         <div class="modal-info-item">
-          <div class="modal-info-label">Type</div>
+          <div class="modal-info-label">TYPE</div>
           <div class="modal-info-value">${movie.titletype || "N/A"}</div>
         </div>
         <div class="modal-info-item">
-          <div class="modal-info-label">Rating</div>
-          <div class="modal-info-value">${movie.averagerating ? "⭐ " + movie.averagerating : "N/A"}</div>
+          <div class="modal-info-label">RATING</div>
+          <div class="modal-info-value">${movie.averagerating ? "★ " + movie.averagerating : "N/A"}</div>
         </div>
         <div class="modal-info-item">
-          <div class="modal-info-label">Votes</div>
+          <div class="modal-info-label">VOTES</div>
           <div class="modal-info-value">${movie.numvotes ? movie.numvotes.toLocaleString() : "N/A"}</div>
         </div>
         <div class="modal-info-item">
-          <div class="modal-info-label">Runtime</div>
-          <div class="modal-info-value">${movie.runtimeminutes ? movie.runtimeminutes + " min" : "N/A"}</div>
+          <div class="modal-info-label">RUNTIME</div>
+          <div class="modal-info-value">${movie.runtimeminutes ? movie.runtimeminutes + " MIN" : "N/A"}</div>
         </div>
         <div class="modal-info-item">
-          <div class="modal-info-label">Genre</div>
+          <div class="modal-info-label">GENRE</div>
           <div class="modal-info-value">${movie.genre || "N/A"}</div>
         </div>
       </div>
     `
-
     document.getElementById("modal").classList.remove("hidden")
   }catch(err){
     console.error("Modal error", err)
@@ -370,12 +350,10 @@ function closeModal(){
   document.getElementById("modal").classList.add("hidden")
 }
 
-// close modal when clicking outside
 document.getElementById("modal").addEventListener("click", function(e){
   if(e.target === this) closeModal()
 })
 
-// close modal with Escape key
 document.addEventListener("keydown", function(e){
   if(e.key === "Escape") closeModal()
 })
