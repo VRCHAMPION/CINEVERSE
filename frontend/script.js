@@ -87,7 +87,7 @@ async function getPoster(title, year){
 // ===== LOAD GENRES =====
 async function loadGenres(){
   try{
-    const res = await fetch("http://127.0.0.1:3000/genres")
+    const res = await fetch("https://cineverse-8je0.onrender.com/genres")
     const genres = await res.json()
     const select = document.getElementById("genreSelect")
     genres.forEach(g => {
@@ -104,7 +104,7 @@ async function loadGenres(){
 // ===== TRENDING =====
 async function loadTrending(){
   try{
-    const res = await fetch("http://127.0.0.1:3000/trending")
+    const res = await fetch("https://cineverse-8je0.onrender.com/trending")
     const data = await res.json()
     const movies = data.results
 
@@ -137,7 +137,6 @@ async function loadTrending(){
       trendingContainer.appendChild(card)
     })
 
-    // load posters in background
     movies.forEach(async (movie, i) => {
       const poster = await getPoster(movie.primarytitle, movie.startyear)
       if(poster){
@@ -172,7 +171,6 @@ async function showMovies(movies, pages){
   const cardElements = []
   const posterTracker = {}
 
-  // show cards immediately with placeholders
   movies.forEach((movie, i) => {
     const gradient = gradients[i % gradients.length]
     const initial = movie.primarytitle.charAt(0).toUpperCase()
@@ -202,7 +200,6 @@ async function showMovies(movies, pages){
   hideSpinner()
   renderPagination()
 
-  // load posters in background
   cardElements.forEach(async ({ movie, index }) => {
     const poster = await getPoster(movie.primarytitle, movie.startyear)
     posterTracker[index] = poster
@@ -290,7 +287,7 @@ async function loadMovies(){
   currentMode = "home"
   showSpinner()
   try{
-    const res = await fetch(`http://127.0.0.1:3000/movies?page=${currentPage}&sort=${getSort()}`)
+    const res = await fetch(`https://cineverse-8je0.onrender.com/movies?page=${currentPage}&sort=${getSort()}`)
     const data = await res.json()
     await showMovies(data.results, data.totalPages)
   }catch(err){
@@ -303,7 +300,7 @@ async function loadByType(){
   currentMode = "movies"
   showSpinner()
   try{
-    const res = await fetch(`http://127.0.0.1:3000/movies/type?page=${currentPage}&sort=${getSort()}`)
+    const res = await fetch(`https://cineverse-8je0.onrender.com/movies/type?page=${currentPage}&sort=${getSort()}`)
     const data = await res.json()
     await showMovies(data.results, data.totalPages)
   }catch(err){
@@ -316,7 +313,7 @@ async function loadSeries(){
   currentMode = "series"
   showSpinner()
   try{
-    const res = await fetch(`http://127.0.0.1:3000/series?page=${currentPage}&sort=${getSort()}`)
+    const res = await fetch(`https://cineverse-8je0.onrender.com/series?page=${currentPage}&sort=${getSort()}`)
     const data = await res.json()
     await showMovies(data.results, data.totalPages)
   }catch(err){
@@ -343,7 +340,7 @@ async function searchMovies(){
     currentMode = "search"
     showSpinner()
     try{
-      const res = await fetch(`http://127.0.0.1:3000/search?title=${encodeURIComponent(text)}&page=${currentPage}`)
+      const res = await fetch(`https://cineverse-8je0.onrender.com/search?title=${encodeURIComponent(text)}&page=${currentPage}`)
       const data = await res.json()
       await showMovies(data.results, data.totalPages)
     }catch{
@@ -361,7 +358,7 @@ async function filterYear(year){
   try{
     const genre = getGenre()
     const sort = getSort()
-    const res = await fetch(`http://127.0.0.1:3000/filter?year=${year}&rating=0&page=${currentPage}&sort=${sort}&genre=${encodeURIComponent(genre)}`)
+    const res = await fetch(`https://cineverse-8je0.onrender.com/filter?year=${year}&rating=0&page=${currentPage}&sort=${sort}&genre=${encodeURIComponent(genre)}`)
     const data = await res.json()
     await showMovies(data.results, data.totalPages)
   }catch{
@@ -373,11 +370,10 @@ async function filterYear(year){
 async function openModal(tconst, gradient, poster){
   if(!tconst) return
   try{
-    const res = await fetch(`http://127.0.0.1:3000/details/${tconst}`)
+    const res = await fetch(`https://cineverse-8je0.onrender.com/details/${tconst}`)
     const movie = await res.json()
     const initial = movie.primarytitle.charAt(0).toUpperCase()
 
-    // fetch poster if not already available
     const finalPoster = poster || await getPoster(movie.primarytitle, movie.startyear)
 
     const posterHTML = finalPoster
