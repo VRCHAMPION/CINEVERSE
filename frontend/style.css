@@ -836,3 +836,133 @@ nav a:hover::after, nav a.active::after {
   object-fit: cover;
   display: block;
 }
+
+/* ===== MOBILE RESPONSIVE ===== */
+@media (max-width: 768px) {
+
+  header {
+    padding: 15px 20px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  nav {
+    gap: 15px;
+    flex-wrap: wrap;
+  }
+
+  nav a {
+    font-size: 9px;
+    letter-spacing: 2px;
+  }
+
+  .hero {
+    padding: 40px 20px 30px;
+  }
+
+  .hero-line1, .hero-line2, .hero-line3 {
+    font-size: 28px;
+    letter-spacing: 4px;
+  }
+
+  .search-wrapper {
+    width: 100%;
+  }
+
+  .filters {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .filter-btn {
+    font-size: 11px;
+    padding: 8px 15px;
+  }
+
+  .trending-section {
+    padding: 20px 20px 30px;
+  }
+
+  .trending-card {
+    min-width: 130px;
+  }
+
+  .controls-bar {
+    padding: 10px 20px 15px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .controls-right {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .controls-right select {
+    flex: 1;
+    font-size: 9px;
+  }
+
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+    padding: 15px 20px 30px;
+  }
+
+  .no-poster {
+    height: 200px;
+  }
+
+  .card-poster {
+    height: 200px;
+  }
+
+  .poster-initial {
+    font-size: 50px;
+  }
+
+  .pagination {
+    padding: 15px 20px 40px;
+    gap: 6px;
+  }
+
+  .pagination button {
+    padding: 6px 10px;
+    font-size: 9px;
+  }
+
+  .modal-box {
+    padding: 25px 20px;
+    width: 95%;
+  }
+
+  .modal-title {
+    font-size: 14px;
+    letter-spacing: 2px;
+  }
+
+  .modal-info {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .modal-info-value {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 400px) {
+  .hero-line1, .hero-line2, .hero-line3 {
+    font-size: 22px;
+    letter-spacing: 2px;
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  nav {
+    gap: 10px;
+  }
+}
