@@ -1,3 +1,4 @@
-node_modules/
-.env
-db.js
+backend/node_modules/
+backend/db.js
+database/
+database.sql

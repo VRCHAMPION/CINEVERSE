@@ -7,6 +7,9 @@ const app = express()
 app.use(cors())
 app.use(express.json())
 
+// ===== EXCLUDED TYPES =====
+const EXCLUDED = `titletype NOT IN ('tvEpisode', 'tvShort', 'short', 'videoGame', 'tvPilot')`
+
 // ================= HOME =================
 app.get("/", (req,res)=>{
     res.send("Server is running 🚀")
@@ -26,19 +29,23 @@ app.get("/movies", async (req,res)=>{
     else if(sort === "title") orderBy = "ORDER BY t.primarytitle ASC"
 
     try{
-        const countResult = await db.query("SELECT COUNT(*) FROM Titles")
+        const countResult = await db.query(
+            `SELECT COUNT(*) FROM titles WHERE ${EXCLUDED}`
+        )
         const total = parseInt(countResult.rows[0].count)
 
         let query
         if(sort === "rating"){
             query = `SELECT t.tconst, t.primarytitle, t.startyear, r.averagerating
-                     FROM Titles t
-                     LEFT JOIN Ratings r ON t.tconst = r.tconst
+                     FROM titles t
+                     LEFT JOIN ratings r ON t.tconst = r.tconst
+                     WHERE t.${EXCLUDED}
                      ${orderBy}
                      LIMIT $1 OFFSET $2`
         } else {
             query = `SELECT tconst, primarytitle, startyear
-                     FROM Titles
+                     FROM titles
+                     WHERE ${EXCLUDED}
                      ${orderBy}
                      LIMIT $1 OFFSET $2`
         }
@@ -71,15 +78,18 @@ app.get("/search", async (req,res)=>{
 
     try{
         const countResult = await db.query(
-            `SELECT COUNT(*) FROM Titles WHERE primarytitle ILIKE $1`,
+            `SELECT COUNT(*) FROM titles
+             WHERE primarytitle ILIKE $1
+             AND ${EXCLUDED}`,
             [`%${title}%`]
         )
         const total = parseInt(countResult.rows[0].count)
 
         const result = await db.query(
             `SELECT tconst, primarytitle, startyear
-             FROM Titles
+             FROM titles
              WHERE primarytitle ILIKE $1
+             AND ${EXCLUDED}
              LIMIT $2 OFFSET $3`,
             [`%${title}%`, limit, offset]
         )
@@ -108,7 +118,8 @@ app.get("/filter", async (req,res)=>{
     const limit = 20
     const offset = (page - 1) * limit
 
-    let conditions = ["startyear >= $1", "averagerating >= $2"]
+    let conditions = ["t.startyear >= $1", "r.averagerating >= $2",
+        `t.titletype NOT IN ('tvEpisode', 'tvShort', 'short', 'videoGame', 'tvPilot')`]
     let params = [year, rating]
 
     if(genre){
@@ -116,7 +127,7 @@ app.get("/filter", async (req,res)=>{
         conditions.push(`t.genre ILIKE $${params.length}`)
     }
 
-    let orderBy = "ORDER BY averagerating DESC"
+    let orderBy = "ORDER BY r.averagerating DESC"
     if(sort === "year_desc") orderBy = "ORDER BY t.startyear DESC"
     else if(sort === "year_asc") orderBy = "ORDER BY t.startyear ASC"
     else if(sort === "title") orderBy = "ORDER BY t.primarytitle ASC"
@@ -126,8 +137,8 @@ app.get("/filter", async (req,res)=>{
     try{
         const countResult = await db.query(
             `SELECT COUNT(*)
-             FROM Titles t
-             JOIN Ratings r ON t.tconst = r.tconst
+             FROM titles t
+             JOIN ratings r ON t.tconst = r.tconst
              ${whereClause}`,
             params
         )
@@ -135,8 +146,8 @@ app.get("/filter", async (req,res)=>{
 
         const result = await db.query(
             `SELECT t.tconst, t.primarytitle, t.startyear, r.averagerating
-             FROM Titles t
-             JOIN Ratings r ON t.tconst = r.tconst
+             FROM titles t
+             JOIN ratings r ON t.tconst = r.tconst
              ${whereClause}
              ${orderBy}
              LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
@@ -161,9 +172,11 @@ app.get("/trending", async (req,res)=>{
     try{
         const result = await db.query(
             `SELECT t.tconst, t.primarytitle, t.startyear, r.averagerating
-             FROM Titles t
-             JOIN Ratings r ON t.tconst = r.tconst
-             WHERE r.numvotes >= 1000
+             FROM titles t
+             JOIN ratings r ON t.tconst = r.tconst
+             WHERE r.numvotes >= 10000
+             AND t.startyear >= 2015
+             AND t.titletype IN ('movie', 'tvMovie', 'tvSeries', 'tvMiniSeries')
              ORDER BY r.averagerating DESC
              LIMIT 10`
         )
@@ -190,21 +203,21 @@ app.get("/movies/type", async (req,res)=>{
 
     try{
         const countResult = await db.query(
-            `SELECT COUNT(*) FROM Titles WHERE titletype IN ('movie', 'tvMovie')`
+            `SELECT COUNT(*) FROM titles WHERE titletype IN ('movie', 'tvMovie')`
         )
         const total = parseInt(countResult.rows[0].count)
 
         let query
         if(sort === "rating"){
             query = `SELECT t.tconst, t.primarytitle, t.startyear, r.averagerating
-                     FROM Titles t
-                     LEFT JOIN Ratings r ON t.tconst = r.tconst
+                     FROM titles t
+                     LEFT JOIN ratings r ON t.tconst = r.tconst
                      WHERE t.titletype IN ('movie', 'tvMovie')
                      ${orderBy}
                      LIMIT $1 OFFSET $2`
         } else {
             query = `SELECT tconst, primarytitle, startyear
-                     FROM Titles
+                     FROM titles
                      WHERE titletype IN ('movie', 'tvMovie')
                      ${orderBy}
                      LIMIT $1 OFFSET $2`
@@ -240,21 +253,21 @@ app.get("/series", async (req,res)=>{
 
     try{
         const countResult = await db.query(
-            `SELECT COUNT(*) FROM Titles WHERE titletype IN ('tvSeries', 'tvMiniSeries')`
+            `SELECT COUNT(*) FROM titles WHERE titletype IN ('tvSeries', 'tvMiniSeries')`
         )
         const total = parseInt(countResult.rows[0].count)
 
         let query
         if(sort === "rating"){
             query = `SELECT t.tconst, t.primarytitle, t.startyear, r.averagerating
-                     FROM Titles t
-                     LEFT JOIN Ratings r ON t.tconst = r.tconst
+                     FROM titles t
+                     LEFT JOIN ratings r ON t.tconst = r.tconst
                      WHERE t.titletype IN ('tvSeries', 'tvMiniSeries')
                      ${orderBy}
                      LIMIT $1 OFFSET $2`
         } else {
             query = `SELECT tconst, primarytitle, startyear
-                     FROM Titles
+                     FROM titles
                      WHERE titletype IN ('tvSeries', 'tvMiniSeries')
                      ${orderBy}
                      LIMIT $1 OFFSET $2`
@@ -282,8 +295,8 @@ app.get("/details/:tconst", async (req,res)=>{
         const result = await db.query(
             `SELECT t.primarytitle, t.startyear, t.runtimeminutes,
                     t.genre, t.titletype, r.averagerating, r.numvotes
-             FROM Titles t
-             LEFT JOIN Ratings r ON t.tconst = r.tconst
+             FROM titles t
+             LEFT JOIN ratings r ON t.tconst = r.tconst
              WHERE t.tconst = $1`,
             [tconst]
         )
@@ -303,8 +316,9 @@ app.get("/genres", async (req,res)=>{
     try{
         const result = await db.query(
             `SELECT DISTINCT UNNEST(STRING_TO_ARRAY(genre, ',')) AS genre
-             FROM Titles
+             FROM titles
              WHERE genre IS NOT NULL
+             AND ${EXCLUDED}
              ORDER BY genre`
         )
         res.json(result.rows.map(r => r.genre.trim()))
