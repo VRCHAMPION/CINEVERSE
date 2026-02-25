@@ -57,11 +57,12 @@ function getGenre(){ return document.getElementById("genreSelect").value }
 // ===== APPLY CONTROLS =====
 function applyControls(){
   currentPage = 1
-  if(currentMode === "home") loadMovies()
-  else if(currentMode === "movies") loadByType()
+  const genre = getGenre()
+  if(currentMode === "movies") loadByType()
   else if(currentMode === "series") loadSeries()
   else if(currentMode === "search") searchMovies()
-  else if(currentMode === "filter") filterYear(currentYear)
+  else if(genre || currentMode === "filter") filterYear(currentYear)
+  else loadMovies()
 }
 
 // ===== FETCH POSTER FROM OMDb =====
