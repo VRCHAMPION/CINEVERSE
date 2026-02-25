@@ -1104,3 +1104,17 @@ nav a:hover::after, nav a.active::after {
   pointer-events: none;
   z-index: 1;
 }
+
+.controls-bar {
+  position: relative;
+  z-index: 50;
+}
+
+.custom-select {
+  position: relative;
+  z-index: 100;
+}
+
+.custom-select-dropdown {
+  z-index: 9999;
+}
