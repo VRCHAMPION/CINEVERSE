@@ -30,6 +30,35 @@ let currentSearch = ""
 let currentYear = 0
 let totalPages = 1
 
+// ===== CUSTOM DROPDOWN STATE =====
+const dropdownValues = { genreDropdown: '', sortDropdown: 'default' }
+
+function getSort(){ return dropdownValues['sortDropdown'] }
+function getGenre(){ return dropdownValues['genreDropdown'] }
+
+function toggleDropdown(id) {
+  const dropdown = document.getElementById(id)
+  const isOpen = dropdown.classList.contains('open')
+  document.querySelectorAll('.custom-select').forEach(d => d.classList.remove('open'))
+  if (!isOpen) dropdown.classList.add('open')
+}
+
+function selectOption(dropdownId, value, label) {
+  dropdownValues[dropdownId] = value
+  document.getElementById(dropdownId === 'genreDropdown' ? 'genreValue' : 'sortValue').textContent = label
+  document.querySelectorAll(`#${dropdownId} .custom-select-option`).forEach(opt => {
+    opt.classList.toggle('selected', opt.dataset.value === value)
+  })
+  document.getElementById(dropdownId).classList.remove('open')
+  applyControls()
+}
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.custom-select')) {
+    document.querySelectorAll('.custom-select').forEach(d => d.classList.remove('open'))
+  }
+})
+
 // ===== SPINNER =====
 function showSpinner(){
   spinner.classList.remove("hidden")
@@ -49,10 +78,6 @@ function setActive(el){
   document.getElementById("sectionTitle").textContent = el.textContent
   currentPage = 1
 }
-
-// ===== GET CONTROLS =====
-function getSort(){ return document.getElementById("sortSelect").value }
-function getGenre(){ return document.getElementById("genreSelect").value }
 
 // ===== APPLY CONTROLS =====
 function applyControls(){
@@ -90,12 +115,14 @@ async function loadGenres(){
   try{
     const res = await fetch("https://cineverse-8je0.onrender.com/genres")
     const genres = await res.json()
-    const select = document.getElementById("genreSelect")
+    const genreContainer = document.getElementById("genreOptions")
     genres.forEach(g => {
-      const option = document.createElement("option")
-      option.value = g
-      option.textContent = g
-      select.appendChild(option)
+      const option = document.createElement("div")
+      option.className = "custom-select-option"
+      option.dataset.value = g
+      option.textContent = g.toUpperCase()
+      option.onclick = () => selectOption('genreDropdown', g, g.toUpperCase())
+      genreContainer.appendChild(option)
     })
   }catch(err){
     console.log("Could not load genres", err)

@@ -44,21 +44,6 @@
     <input type="text" id="searchInput" placeholder="SEARCH TITLES...">
     <div class="search-border"></div>
   </div>
-
-  <div class="filters">
-    <button onclick="filterYear(2000)" class="filter-btn">
-      <span class="filter-year">2000</span>
-      <span class="filter-plus">+</span>
-    </button>
-    <button onclick="filterYear(2010)" class="filter-btn">
-      <span class="filter-year">2010</span>
-      <span class="filter-plus">+</span>
-    </button>
-    <button onclick="filterYear(2020)" class="filter-btn">
-      <span class="filter-year">2020</span>
-      <span class="filter-plus">+</span>
-    </button>
-  </div>
 </section>
 
 <!-- TRENDING -->
@@ -79,16 +64,33 @@
     <div class="section-line"></div>
   </div>
   <div class="controls-right">
-    <select id="genreSelect" onchange="applyControls()">
-      <option value="">ALL GENRES</option>
-    </select>
-    <select id="sortSelect" onchange="applyControls()">
-      <option value="default">DEFAULT</option>
-      <option value="rating">TOP RATED</option>
-      <option value="year_desc">NEWEST</option>
-      <option value="year_asc">OLDEST</option>
-      <option value="title">A — Z</option>
-    </select>
+
+    <!-- Genre Dropdown -->
+    <div class="custom-select" id="genreDropdown">
+      <div class="custom-select-trigger" onclick="toggleDropdown('genreDropdown')">
+        <span class="custom-select-value" id="genreValue">ALL GENRES</span>
+        <span class="custom-select-arrow">▼</span>
+      </div>
+      <div class="custom-select-dropdown" id="genreOptions">
+        <div class="custom-select-option selected" data-value="" onclick="selectOption('genreDropdown', '', 'ALL GENRES')">ALL GENRES</div>
+      </div>
+    </div>
+
+    <!-- Sort Dropdown -->
+    <div class="custom-select" id="sortDropdown">
+      <div class="custom-select-trigger" onclick="toggleDropdown('sortDropdown')">
+        <span class="custom-select-value" id="sortValue">DEFAULT</span>
+        <span class="custom-select-arrow">▼</span>
+      </div>
+      <div class="custom-select-dropdown" id="sortOptions">
+        <div class="custom-select-option selected" data-value="default" onclick="selectOption('sortDropdown', 'default', 'DEFAULT')">DEFAULT</div>
+        <div class="custom-select-option" data-value="rating" onclick="selectOption('sortDropdown', 'rating', 'TOP RATED')">TOP RATED</div>
+        <div class="custom-select-option" data-value="year_desc" onclick="selectOption('sortDropdown', 'year_desc', 'NEWEST')">NEWEST</div>
+        <div class="custom-select-option" data-value="year_asc" onclick="selectOption('sortDropdown', 'year_asc', 'OLDEST')">OLDEST</div>
+        <div class="custom-select-option" data-value="title" onclick="selectOption('sortDropdown', 'title', 'A — Z')">A — Z</div>
+      </div>
+    </div>
+
   </div>
 </div>
 
