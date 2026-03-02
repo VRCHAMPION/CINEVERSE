@@ -2,14 +2,11 @@ const express = require('express')
 const cors = require('cors')
 const helmet = require('helmet')
 const rateLimit = require('express-rate-limit')
-const db = require('./db')
 
 const app = express()
 
-// ===== SECURITY HEADERS =====
 app.use(helmet())
 
-// ===== CORS - only allow your Netlify domain =====
 app.use(cors({
     origin: ['https://cineverse040406.netlify.app', 'http://localhost:3000'],
     methods: ['GET'],
@@ -17,332 +14,318 @@ app.use(cors({
 
 app.use(express.json())
 
-// ===== RATE LIMITING =====
 const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
+    windowMs: 15 * 60 * 1000,
     max: 100,
     message: { error: "Too many requests, please try again later." }
 })
 
 const searchLimiter = rateLimit({
-    windowMs: 1 * 60 * 1000, // 1 minute
+    windowMs: 1 * 60 * 1000,
     max: 30,
     message: { error: "Too many search requests, slow down." }
 })
 
 app.use(limiter)
 
-// ===== INPUT VALIDATION HELPERS =====
-const VALID_SORTS = ['default', 'rating', 'year_desc', 'year_asc', 'title']
+// ===== TMDB CONFIG =====
+const TMDB_BASE = 'https://api.themoviedb.org/3'
 
-function validateSort(sort) {
-    return VALID_SORTS.includes(sort) ? sort : 'default'
+function tmdbHeaders() {
+    return {
+        Authorization: `Bearer ${process.env.TMDB_BEARER_TOKEN}`,
+        'Content-Type': 'application/json'
+    }
 }
 
+async function tmdbFetch(path) {
+    const res = await fetch(`${TMDB_BASE}${path}`, { headers: tmdbHeaders() })
+    if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.status_message || 'TMDB error')
+    }
+    return res.json()
+}
+
+// ===== INPUT VALIDATION =====
 function validatePage(page) {
     const p = parseInt(page)
     return (!isNaN(p) && p > 0 && p <= 1000) ? p : 1
 }
 
-function validateYear(year) {
-    const y = parseInt(year)
-    return (!isNaN(y) && y >= 1900 && y <= 2100) ? y : 0
+function validateId(id) {
+    return /^\d+$/.test(id)
 }
 
-function validateRating(rating) {
-    const r = parseFloat(rating)
-    return (!isNaN(r) && r >= 0 && r <= 10) ? r : 0
-}
-
-function validateTconst(tconst) {
-    return /^tt\d{7,8}$/.test(tconst)
-}
-
-// ===== EXCLUDED TYPES =====
-const EXCLUDED = `titletype NOT IN ('tvEpisode', 'tvShort', 'short', 'videoGame', 'tvPilot')`
-
-// ================= HOME =================
-app.get("/", (req, res) => {
-    res.send("Server is running 🚀")
+// ===== HOME =====
+app.get('/', (req, res) => {
+    res.send('Cineverse TMDB Server is running 🚀')
 })
 
-// ================= MOVIES =================
-app.get("/movies", async (req, res) => {
+// ===== TRENDING =====
+// Replaces: GET /trending (was top-rated from Supabase)
+// Now: real weekly trending from TMDB
+app.get('/trending', async (req, res) => {
+    try {
+        const data = await tmdbFetch('/trending/all/week?language=en-US')
+        res.json({ results: data.results })
+    } catch (err) {
+        console.error(err)
+        res.status(500).json({ error: 'Error fetching trending' })
+    }
+})
+
+// ===== ALL MOVIES (home) =====
+// Replaces: GET /movies (was paginated Supabase query)
+// Now: TMDB popular movies with sort support
+app.get('/movies', async (req, res) => {
     const page = validatePage(req.query.page)
-    const sort = validateSort(req.query.sort)
-    const limit = 20
-    const offset = (page - 1) * limit
+    const sort = req.query.sort || 'default'
 
-    let orderBy = ""
-    if (sort === "rating") orderBy = "ORDER BY r.averagerating DESC"
-    else if (sort === "year_desc") orderBy = "ORDER BY t.startyear DESC"
-    else if (sort === "year_asc") orderBy = "ORDER BY t.startyear ASC"
-    else if (sort === "title") orderBy = "ORDER BY t.primarytitle ASC"
+    let endpoint = '/movie/popular'
+    if (sort === 'rating') endpoint = '/movie/top_rated'
+    else if (sort === 'year_desc' || sort === 'year_asc') endpoint = '/discover/movie?' + new URLSearchParams({
+        sort_by: sort === 'year_desc' ? 'primary_release_date.desc' : 'primary_release_date.asc',
+        page
+    })
 
     try {
-        const countResult = await db.query(`SELECT COUNT(*) FROM titles WHERE ${EXCLUDED}`)
-        const total = parseInt(countResult.rows[0].count)
-
-        let query
-        if (sort === "rating") {
-            query = `SELECT t.tconst, t.primarytitle, t.startyear, r.averagerating
-                     FROM titles t
-                     LEFT JOIN ratings r ON t.tconst = r.tconst
-                     WHERE t.${EXCLUDED}
-                     ${orderBy}
-                     LIMIT $1 OFFSET $2`
-        } else {
-            query = `SELECT tconst, primarytitle, startyear
-                     FROM titles
-                     WHERE ${EXCLUDED}
-                     ${orderBy}
-                     LIMIT $1 OFFSET $2`
-        }
-
-        const result = await db.query(query, [limit, offset])
-        res.json({ page, totalPages: Math.ceil(total / limit), totalResults: total, results: result.rows })
+        const path = endpoint.includes('?')
+            ? `${endpoint}&page=${page}&language=en-US`
+            : `${endpoint}?page=${page}&language=en-US`
+        const data = await tmdbFetch(path)
+        res.json({
+            page: data.page,
+            totalPages: Math.min(data.total_pages, 500),
+            totalResults: data.total_results,
+            results: data.results
+        })
     } catch (err) {
         console.error(err)
-        res.status(500).json({ error: "Error fetching movies" })
+        res.status(500).json({ error: 'Error fetching movies' })
     }
 })
 
-// ================= SEARCH =================
-app.get("/search", searchLimiter, async (req, res) => {
-    const title = req.query.title
+// ===== MOVIES BY TYPE =====
+// Replaces: GET /movies/type (was movie + tvMovie from Supabase)
+// Now: TMDB discover movies only
+app.get('/movies/type', async (req, res) => {
     const page = validatePage(req.query.page)
-    const limit = 20
-    const offset = (page - 1) * limit
+    const sort = req.query.sort || 'default'
 
-    if (!title || typeof title !== 'string') {
-        return res.status(400).json({ error: "Please provide title parameter" })
+    const sortMap = {
+        rating: 'vote_average.desc',
+        year_desc: 'primary_release_date.desc',
+        year_asc: 'primary_release_date.asc',
+        title: 'title.asc',
+        default: 'popularity.desc'
     }
 
-    if (title.length > 100) {
-        return res.status(400).json({ error: "Search query too long" })
-    }
+    const sortBy = sortMap[sort] || 'popularity.desc'
 
     try {
-        const countResult = await db.query(
-            `SELECT COUNT(*) FROM titles WHERE primarytitle ILIKE $1 AND ${EXCLUDED}`,
-            [`%${title}%`]
+        const data = await tmdbFetch(
+            `/discover/movie?sort_by=${sortBy}&vote_count.gte=100&page=${page}&language=en-US`
         )
-        const total = parseInt(countResult.rows[0].count)
-
-        const result = await db.query(
-            `SELECT tconst, primarytitle, startyear
-             FROM titles
-             WHERE primarytitle ILIKE $1
-             AND ${EXCLUDED}
-             LIMIT $2 OFFSET $3`,
-            [`%${title}%`, limit, offset]
-        )
-
-        res.json({ search: title, page, totalPages: Math.ceil(total / limit), totalResults: total, results: result.rows })
+        res.json({
+            page: data.page,
+            totalPages: Math.min(data.total_pages, 500),
+            totalResults: data.total_results,
+            results: data.results
+        })
     } catch (err) {
         console.error(err)
-        res.status(500).json({ error: "Search failed" })
+        res.status(500).json({ error: 'Error fetching movies' })
     }
 })
 
-// ================= FILTER =================
-app.get("/filter", async (req, res) => {
-    const year = validateYear(req.query.year)
-    const rating = validateRating(req.query.rating)
-    const genre = req.query.genre ? req.query.genre.slice(0, 50) : ""
-    const sort = validateSort(req.query.sort || "rating")
+// ===== SERIES =====
+// Replaces: GET /series (was tvSeries + tvMiniSeries from Supabase)
+// Now: TMDB discover TV
+app.get('/series', async (req, res) => {
     const page = validatePage(req.query.page)
-    const limit = 20
-    const offset = (page - 1) * limit
+    const sort = req.query.sort || 'default'
 
-    let conditions = ["t.startyear >= $1", "r.averagerating >= $2",
-        `t.titletype NOT IN ('tvEpisode', 'tvShort', 'short', 'videoGame', 'tvPilot')`]
-    let params = [year, rating]
-
-    if (genre) {
-        params.push(`%${genre}%`)
-        conditions.push(`t.genre ILIKE $${params.length}`)
+    const sortMap = {
+        rating: 'vote_average.desc',
+        year_desc: 'first_air_date.desc',
+        year_asc: 'first_air_date.asc',
+        title: 'name.asc',
+        default: 'popularity.desc'
     }
 
-    let orderBy = "ORDER BY r.averagerating DESC"
-    if (sort === "year_desc") orderBy = "ORDER BY t.startyear DESC"
-    else if (sort === "year_asc") orderBy = "ORDER BY t.startyear ASC"
-    else if (sort === "title") orderBy = "ORDER BY t.primarytitle ASC"
-
-    const whereClause = "WHERE " + conditions.join(" AND ")
+    const sortBy = sortMap[sort] || 'popularity.desc'
 
     try {
-        const countResult = await db.query(
-            `SELECT COUNT(*) FROM titles t JOIN ratings r ON t.tconst = r.tconst ${whereClause}`,
-            params
+        const data = await tmdbFetch(
+            `/discover/tv?sort_by=${sortBy}&vote_count.gte=100&page=${page}&language=en-US`
         )
-        const total = parseInt(countResult.rows[0].count)
-
-        const result = await db.query(
-            `SELECT t.tconst, t.primarytitle, t.startyear, r.averagerating
-             FROM titles t
-             JOIN ratings r ON t.tconst = r.tconst
-             ${whereClause}
-             ${orderBy}
-             LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
-            [...params, limit, offset]
-        )
-
-        res.json({ page, totalPages: Math.ceil(total / limit), totalResults: total, results: result.rows })
+        res.json({
+            page: data.page,
+            totalPages: Math.min(data.total_pages, 500),
+            totalResults: data.total_results,
+            results: data.results
+        })
     } catch (err) {
         console.error(err)
-        res.status(500).json({ error: "Filter failed" })
+        res.status(500).json({ error: 'Error fetching series' })
     }
 })
 
-// ================= TRENDING =================
-app.get("/trending", async (req, res) => {
-    try {
-        const result = await db.query(
-            `SELECT t.tconst, t.primarytitle, t.startyear, r.averagerating
-             FROM titles t
-             JOIN ratings r ON t.tconst = r.tconst
-             WHERE r.numvotes >= 10000
-             AND t.startyear >= 2015
-             AND t.titletype IN ('movie', 'tvMovie', 'tvSeries', 'tvMiniSeries')
-             ORDER BY r.averagerating DESC
-             LIMIT 10`
-        )
-        res.json({ results: result.rows })
-    } catch (err) {
-        console.error(err)
-        res.status(500).json({ error: "Error fetching trending" })
-    }
-})
-
-// ================= MOVIES BY TYPE =================
-app.get("/movies/type", async (req, res) => {
+// ===== SEARCH =====
+// Replaces: GET /search?title= (was ILIKE query on Supabase)
+// Now: TMDB multi-search (movies + TV + people)
+app.get('/search', searchLimiter, async (req, res) => {
+    const query = req.query.title
     const page = validatePage(req.query.page)
-    const sort = validateSort(req.query.sort)
-    const limit = 20
-    const offset = (page - 1) * limit
 
-    let orderBy = ""
-    if (sort === "rating") orderBy = "ORDER BY r.averagerating DESC"
-    else if (sort === "year_desc") orderBy = "ORDER BY t.startyear DESC"
-    else if (sort === "year_asc") orderBy = "ORDER BY t.startyear ASC"
-    else if (sort === "title") orderBy = "ORDER BY t.primarytitle ASC"
+    if (!query || typeof query !== 'string') {
+        return res.status(400).json({ error: 'Please provide title parameter' })
+    }
+
+    if (query.length > 100) {
+        return res.status(400).json({ error: 'Search query too long' })
+    }
 
     try {
-        const countResult = await db.query(`SELECT COUNT(*) FROM titles WHERE titletype IN ('movie', 'tvMovie')`)
-        const total = parseInt(countResult.rows[0].count)
-
-        let query
-        if (sort === "rating") {
-            query = `SELECT t.tconst, t.primarytitle, t.startyear, r.averagerating
-                     FROM titles t
-                     LEFT JOIN ratings r ON t.tconst = r.tconst
-                     WHERE t.titletype IN ('movie', 'tvMovie')
-                     ${orderBy}
-                     LIMIT $1 OFFSET $2`
-        } else {
-            query = `SELECT tconst, primarytitle, startyear
-                     FROM titles
-                     WHERE titletype IN ('movie', 'tvMovie')
-                     ${orderBy}
-                     LIMIT $1 OFFSET $2`
-        }
-
-        const result = await db.query(query, [limit, offset])
-        res.json({ page, totalPages: Math.ceil(total / limit), totalResults: total, results: result.rows })
+        const data = await tmdbFetch(
+            `/search/multi?query=${encodeURIComponent(query)}&page=${page}&language=en-US&include_adult=false`
+        )
+        res.json({
+            search: query,
+            page: data.page,
+            totalPages: Math.min(data.total_pages, 500),
+            totalResults: data.total_results,
+            results: data.results.filter(r => r.media_type !== 'person')
+        })
     } catch (err) {
         console.error(err)
-        res.status(500).json({ error: "Error fetching movies" })
+        res.status(500).json({ error: 'Search failed' })
     }
 })
 
-// ================= SERIES =================
-app.get("/series", async (req, res) => {
+// ===== FILTER =====
+// Replaces: GET /filter?year=&rating=&genre=&sort= (was SQL WHERE on Supabase)
+// Now: TMDB discover with filters
+app.get('/filter', async (req, res) => {
     const page = validatePage(req.query.page)
-    const sort = validateSort(req.query.sort)
-    const limit = 20
-    const offset = (page - 1) * limit
+    const year = parseInt(req.query.year) || 2010
+    const rating = parseFloat(req.query.rating) || 0
+    const genreId = req.query.genre_id ? parseInt(req.query.genre_id) : null
+    const type = req.query.type || 'movie'
+    const sort = req.query.sort || 'rating'
 
-    let orderBy = ""
-    if (sort === "rating") orderBy = "ORDER BY r.averagerating DESC"
-    else if (sort === "year_desc") orderBy = "ORDER BY t.startyear DESC"
-    else if (sort === "year_asc") orderBy = "ORDER BY t.startyear ASC"
-    else if (sort === "title") orderBy = "ORDER BY t.primarytitle ASC"
+    const sortMap = {
+        rating: 'vote_average.desc',
+        year_desc: type === 'movie' ? 'primary_release_date.desc' : 'first_air_date.desc',
+        year_asc: type === 'movie' ? 'primary_release_date.asc' : 'first_air_date.asc',
+        title: type === 'movie' ? 'title.asc' : 'name.asc',
+        default: 'popularity.desc'
+    }
+
+    const sortBy = sortMap[sort] || 'vote_average.desc'
+    const dateField = type === 'movie' ? 'primary_release_date' : 'first_air_date'
+    const endpoint = type === 'tv' ? '/discover/tv' : '/discover/movie'
+
+    let params = new URLSearchParams({
+        sort_by: sortBy,
+        [`${dateField}.gte`]: `${year}-01-01`,
+        'vote_average.gte': rating,
+        'vote_count.gte': 50,
+        page,
+        language: 'en-US'
+    })
+
+    if (genreId) params.append('with_genres', genreId)
 
     try {
-        const countResult = await db.query(`SELECT COUNT(*) FROM titles WHERE titletype IN ('tvSeries', 'tvMiniSeries')`)
-        const total = parseInt(countResult.rows[0].count)
-
-        let query
-        if (sort === "rating") {
-            query = `SELECT t.tconst, t.primarytitle, t.startyear, r.averagerating
-                     FROM titles t
-                     LEFT JOIN ratings r ON t.tconst = r.tconst
-                     WHERE t.titletype IN ('tvSeries', 'tvMiniSeries')
-                     ${orderBy}
-                     LIMIT $1 OFFSET $2`
-        } else {
-            query = `SELECT tconst, primarytitle, startyear
-                     FROM titles
-                     WHERE titletype IN ('tvSeries', 'tvMiniSeries')
-                     ${orderBy}
-                     LIMIT $1 OFFSET $2`
-        }
-
-        const result = await db.query(query, [limit, offset])
-        res.json({ page, totalPages: Math.ceil(total / limit), totalResults: total, results: result.rows })
+        const data = await tmdbFetch(`${endpoint}?${params.toString()}`)
+        res.json({
+            page: data.page,
+            totalPages: Math.min(data.total_pages, 500),
+            totalResults: data.total_results,
+            results: data.results
+        })
     } catch (err) {
         console.error(err)
-        res.status(500).json({ error: "Error fetching series" })
+        res.status(500).json({ error: 'Filter failed' })
     }
 })
 
-// ================= DETAILS =================
-app.get("/details/:tconst", async (req, res) => {
-    const { tconst } = req.params
+// ===== GENRES =====
+// Replaces: GET /genres (was DISTINCT UNNEST from Supabase)
+// Now: TMDB official genre list
+app.get('/genres', async (req, res) => {
+    const type = req.query.type || 'movie'
+    try {
+        const data = await tmdbFetch(`/genre/${type}/list?language=en-US`)
+        res.json(data.genres)
+    } catch (err) {
+        console.error(err)
+        res.status(500).json({ error: 'Error fetching genres' })
+    }
+})
 
-    if (!validateTconst(tconst)) {
-        return res.status(400).json({ error: "Invalid ID format" })
+// ===== DETAILS =====
+// Replaces: GET /details/:tconst (was JOIN on Supabase)
+// Now: TMDB full detail with credits, videos, watch providers, recommendations
+app.get('/details/:id', async (req, res) => {
+    const { id } = req.params
+    const type = req.query.type || 'movie'
+
+    if (!validateId(id)) {
+        return res.status(400).json({ error: 'Invalid ID format' })
     }
 
     try {
-        const result = await db.query(
-            `SELECT t.primarytitle, t.startyear, t.runtimeminutes,
-                    t.genre, t.titletype, r.averagerating, r.numvotes
-             FROM titles t
-             LEFT JOIN ratings r ON t.tconst = r.tconst
-             WHERE t.tconst = $1`,
-            [tconst]
+        const data = await tmdbFetch(
+            `/${type}/${id}?append_to_response=credits,videos,watch/providers,recommendations,similar&language=en-US`
         )
-        if (result.rows.length === 0) {
-            return res.status(404).json({ error: "Title not found" })
-        }
-        res.json(result.rows[0])
+        res.json(data)
     } catch (err) {
         console.error(err)
-        res.status(500).json({ error: "Error fetching details" })
+        res.status(500).json({ error: 'Error fetching details' })
     }
 })
 
-// ================= GENRES =================
-app.get("/genres", async (req, res) => {
+// ===== NOW PLAYING =====
+// New route — was not possible with static IMDb TSV data
+app.get('/movies/now-playing', async (req, res) => {
+    const page = validatePage(req.query.page)
     try {
-        const result = await db.query(
-            `SELECT DISTINCT UNNEST(STRING_TO_ARRAY(genre, ',')) AS genre
-             FROM titles
-             WHERE genre IS NOT NULL
-             AND ${EXCLUDED}
-             ORDER BY genre`
-        )
-        res.json(result.rows.map(r => r.genre.trim()))
+        const data = await tmdbFetch(`/movie/now_playing?page=${page}&language=en-US`)
+        res.json({
+            page: data.page,
+            totalPages: Math.min(data.total_pages, 500),
+            totalResults: data.total_results,
+            results: data.results
+        })
     } catch (err) {
         console.error(err)
-        res.status(500).json({ error: "Error fetching genres" })
+        res.status(500).json({ error: 'Error fetching now playing' })
     }
 })
 
-// ================= SERVER START =================
+// ===== UPCOMING =====
+// New route — was not possible with static IMDb TSV data
+app.get('/movies/upcoming', async (req, res) => {
+    const page = validatePage(req.query.page)
+    try {
+        const data = await tmdbFetch(`/movie/upcoming?page=${page}&language=en-US`)
+        res.json({
+            page: data.page,
+            totalPages: Math.min(data.total_pages, 500),
+            totalResults: data.total_results,
+            results: data.results
+        })
+    } catch (err) {
+        console.error(err)
+        res.status(500).json({ error: 'Error fetching upcoming' })
+    }
+})
+
+// ===== SERVER START =====
 const PORT = process.env.PORT || 3000
 app.listen(PORT, () => {
-    console.log(`Server started on port ${PORT} 🚀`)
+    console.log(`Cineverse TMDB server started on port ${PORT} 🚀`)
 })
