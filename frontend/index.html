@@ -1,121 +1,137 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Discover your next favorite movie or TV series on CineVerse. Explore trending content, search titles, and filter by genre.">
+  <meta name="theme-color" content="#1a1a2e">
+  <meta property="og:title" content="CineVerse - Discover Your Universe">
+  <meta property="og:description" content="Find your next favorite movie or TV series on CineVerse.">
+  <meta property="og:type" content="website">
   <title>CineVerse</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&display=swap"
+    rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
-<!-- BACKGROUND EFFECTS -->
-<div class="bg-grid"></div>
-<div class="bg-glow"></div>
-<div class="scanline"></div>
+  <!-- BACKGROUND EFFECTS -->
+  <div class="bg-grid"></div>
+  <div class="bg-glow"></div>
+  <div class="scanline"></div>
 
-<!-- HEADER -->
-<header>
-  <div class="logo">
-    <span class="logo-icon">▶</span>
-    <span class="logo-text">CINE<span class="logo-accent">VERSE</span></span>
-  </div>
-  <nav>
-    <a class="active" onclick="setActive(this); loadMovies()">HOME</a>
-    <a onclick="setActive(this); loadByType()">MOVIES</a>
-    <a onclick="setActive(this); loadSeries()">SERIES</a>
-    <a>MY LIST</a>
-  </nav>
-  <div class="header-line"></div>
-</header>
-
-<!-- HERO -->
-<section class="hero">
-  <div class="hero-tag">// DISCOVER YOUR UNIVERSE</div>
-  <h1 class="hero-title">
-    <span class="hero-line1">FIND YOUR</span>
-    <span class="hero-line2">NEXT FAVORITE</span>
-    <span class="hero-line3">MOVIE<span class="cursor-blink">_</span></span>
-  </h1>
-
-  <div class="search-wrapper">
-    <span class="search-icon">⌕</span>
-    <input type="text" id="searchInput" placeholder="SEARCH TITLES...">
-    <div class="search-border"></div>
-  </div>
-</section>
-
-<!-- TRENDING -->
-<section class="trending-section">
-  <div class="section-header">
-    <div class="section-tag">01</div>
-    <h2 class="section-label">TRENDING NOW</h2>
-    <div class="section-line"></div>
-  </div>
-  <div id="trendingContainer" class="trending-strip"></div>
-</section>
-
-<!-- CONTROLS -->
-<div class="controls-bar">
-  <div class="section-header">
-    <div class="section-tag">02</div>
-    <h2 class="section-label" id="sectionTitle">ALL TITLES</h2>
-    <div class="section-line"></div>
-  </div>
-  <div class="controls-right">
-
-    <!-- Genre Dropdown -->
-    <div class="custom-select" id="genreDropdown">
-      <div class="custom-select-trigger" onclick="toggleDropdown('genreDropdown')">
-        <span class="custom-select-value" id="genreValue">ALL GENRES</span>
-        <span class="custom-select-arrow">▼</span>
-      </div>
-      <div class="custom-select-dropdown" id="genreOptions">
-        <div class="custom-select-option selected" data-value="" onclick="selectOption('genreDropdown', '', 'ALL GENRES')">ALL GENRES</div>
-      </div>
+  <!-- HEADER -->
+  <header>
+    <div class="logo">
+      <span class="logo-icon">▶</span>
+      <span class="logo-text">CINE<span class="logo-accent">VERSE</span></span>
     </div>
+    <nav>
+      <a href="#" class="active" onclick="setActive(this); loadMovies(); return false;">HOME</a>
+      <a href="#movies" onclick="setActive(this); loadByType(); return false;">MOVIES</a>
+      <a href="#series" onclick="setActive(this); loadSeries(); return false;">SERIES</a>
+      <a href="#mylist">MY LIST</a>
+    </nav>
+    <div class="header-line"></div>
+  </header>
 
-    <!-- Sort Dropdown -->
-    <div class="custom-select" id="sortDropdown">
-      <div class="custom-select-trigger" onclick="toggleDropdown('sortDropdown')">
-        <span class="custom-select-value" id="sortValue">DEFAULT</span>
-        <span class="custom-select-arrow">▼</span>
-      </div>
-      <div class="custom-select-dropdown" id="sortOptions">
-        <div class="custom-select-option selected" data-value="default" onclick="selectOption('sortDropdown', 'default', 'DEFAULT')">DEFAULT</div>
-        <div class="custom-select-option" data-value="rating" onclick="selectOption('sortDropdown', 'rating', 'TOP RATED')">TOP RATED</div>
-        <div class="custom-select-option" data-value="year_desc" onclick="selectOption('sortDropdown', 'year_desc', 'NEWEST')">NEWEST</div>
-        <div class="custom-select-option" data-value="year_asc" onclick="selectOption('sortDropdown', 'year_asc', 'OLDEST')">OLDEST</div>
-        <div class="custom-select-option" data-value="title" onclick="selectOption('sortDropdown', 'title', 'A — Z')">A — Z</div>
-      </div>
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-tag">// DISCOVER YOUR UNIVERSE</div>
+    <h1 class="hero-title">
+      <span class="hero-line1">FIND YOUR</span>
+      <span class="hero-line2">NEXT FAVORITE</span>
+      <span class="hero-line3">MOVIE<span class="cursor-blink">_</span></span>
+    </h1>
+
+    <div class="search-wrapper">
+      <span class="search-icon">⌕</span>
+      <input type="text" id="searchInput" placeholder="SEARCH TITLES..." aria-label="Search titles">
+      <div class="search-border"></div>
     </div>
+  </section>
 
+  <!-- TRENDING -->
+  <section class="trending-section">
+    <div class="section-header">
+      <div class="section-tag">01</div>
+      <h2 class="section-label">TRENDING NOW</h2>
+      <div class="section-line"></div>
+    </div>
+    <div id="trendingContainer" class="trending-strip"></div>
+  </section>
+
+  <!-- CONTROLS -->
+  <div class="controls-bar">
+    <div class="section-header">
+      <div class="section-tag">02</div>
+      <h2 class="section-label" id="sectionTitle">ALL TITLES</h2>
+      <div class="section-line"></div>
+    </div>
+    <div class="controls-right">
+
+      <!-- Genre Dropdown -->
+      <div class="custom-select" id="genreDropdown">
+        <div class="custom-select-trigger" onclick="toggleDropdown('genreDropdown')">
+          <span class="custom-select-value" id="genreValue">ALL GENRES</span>
+          <span class="custom-select-arrow">▼</span>
+        </div>
+        <div class="custom-select-dropdown" id="genreOptions">
+          <div class="custom-select-option selected" data-value=""
+            onclick="selectOption('genreDropdown', '', 'ALL GENRES')">ALL GENRES</div>
+        </div>
+      </div>
+
+      <!-- Sort Dropdown -->
+      <div class="custom-select" id="sortDropdown">
+        <div class="custom-select-trigger" onclick="toggleDropdown('sortDropdown')">
+          <span class="custom-select-value" id="sortValue">DEFAULT</span>
+          <span class="custom-select-arrow">▼</span>
+        </div>
+        <div class="custom-select-dropdown" id="sortOptions">
+          <div class="custom-select-option selected" data-value="default"
+            onclick="selectOption('sortDropdown', 'default', 'DEFAULT')">DEFAULT</div>
+          <div class="custom-select-option" data-value="rating"
+            onclick="selectOption('sortDropdown', 'rating', 'TOP RATED')">TOP RATED</div>
+          <div class="custom-select-option" data-value="year_desc"
+            onclick="selectOption('sortDropdown', 'year_desc', 'NEWEST')">NEWEST</div>
+          <div class="custom-select-option" data-value="year_asc"
+            onclick="selectOption('sortDropdown', 'year_asc', 'OLDEST')">OLDEST</div>
+          <div class="custom-select-option" data-value="title" onclick="selectOption('sortDropdown', 'title', 'A — Z')">
+            A — Z</div>
+        </div>
+      </div>
+
+    </div>
   </div>
-</div>
 
-<!-- SPINNER -->
-<div id="loadingSpinner" class="spinner-container">
-  <div class="spinner-ring"></div>
-  <div class="spinner-ring ring2"></div>
-  <div class="spinner-ring ring3"></div>
-  <p class="spinner-text">LOADING<span class="dots">...</span></p>
-</div>
-
-<!-- GRID -->
-<div id="moviesContainer" class="grid"></div>
-
-<!-- PAGINATION -->
-<div id="pagination" class="pagination hidden"></div>
-
-<!-- MODAL -->
-<div id="modal" class="modal-overlay hidden">
-  <div class="modal-box">
-    <button class="modal-close" onclick="closeModal()">✕</button>
-    <div id="modalContent"></div>
+  <!-- SPINNER -->
+  <div id="loadingSpinner" class="spinner-container">
+    <div class="spinner-ring"></div>
+    <div class="spinner-ring ring2"></div>
+    <div class="spinner-ring ring3"></div>
+    <p class="spinner-text">LOADING<span class="dots">...</span></p>
   </div>
-</div>
 
-<script src="script.js"></script>
+  <!-- GRID -->
+  <div id="moviesContainer" class="grid"></div>
+
+  <!-- PAGINATION -->
+  <div id="pagination" class="pagination hidden"></div>
+
+  <!-- MODAL -->
+  <div id="modal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <button class="modal-close" onclick="closeModal()">✕</button>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
 </body>
+
 </html>

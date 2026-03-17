@@ -53,15 +53,18 @@ Connection Pooling: Uses port 6543 to manage high-frequency database traffic.
 
 ```
 cineverse/
+├── .github/workflows/
+│   └── ci.yml           # GitHub Actions CI pipeline
 ├── backend/
 │   ├── server.js        # Express server and API routes
-│   ├── db.js            # PostgreSQL connection (not included)
+│   ├── tests/           # API integration tests using Jest & Supertest
 │   ├── package.json
 │   └── package-lock.json
 ├── frontend/
-│   ├── index.html
+│   ├── index.html       # SEO-optimized frontend
 │   ├── style.css
 │   └── script.js
+├── .env.example         # Environment variables template
 └── README.md
 ```
 
@@ -81,21 +84,15 @@ cd backend
 npm install
 ```
 
-### 3. Create db.js
-Create a file called `db.js` inside the `backend` folder:
-```javascript
-const { Pool } = require('pg')
-
-const pool = new Pool({
-  host: "localhost",
-  port: 5432,
-  database: "your_database_name",
-  user: "your_username",
-  password: "your_password"
-})
-
-module.exports = pool
+### 3. Environment Variables
+Copy `.env.example` to `.env` in the root (or `backend/`) and configure your variables:
+```bash
+PORT=3000
+TMDB_BEARER_TOKEN=your_tmdb_bearer_token
+DATABASE_URL=your_postgresql_database_url
 ```
+
+*Note: `db.js` is excluded from the repository for security. Ensure your `DATABASE_URL` connects to your Supabase/PostgreSQL instance.*
 
 ### 4. Set up the database
 This project uses the IMDB dataset. Your PostgreSQL database should have these tables:
@@ -130,9 +127,37 @@ Open `frontend/index.html` in your browser.
 
 ## 📸 Screenshots
 
-> Coming soon
+### Home Page (Dark Cinematic Theme)
+![Home Page](https://via.placeholder.com/800x450.png?text=Home+Page+with+Hero+Section+and+Trending+Movies)
+*Discover movies and trending series with a sleek, cinematic aesthetic and modern typography.*
+
+### Search & Filter
+![Search and Filter](https://via.placeholder.com/800x450.png?text=Movie+Search+and+Filtering+Interface)
+*Quickly find movies by title, filter by genres, and sort by rating or release year.*
+
+### Movie Details Modal
+![Movie Details](https://via.placeholder.com/800x450.png?text=Movie+Details+Popup+Modal)
+*View comprehensive movie details including cast, trailers, and recommendations in an immersive overlay.*
 
 ---
+
+## 🧪 Testing
+
+We use **Jest** and **Supertest** for testing our API endpoints.
+
+```bash
+cd backend
+npm run test
+```
+
+---
+
+## 🚀 CI/CD Pipeline
+
+This project uses **GitHub Actions** for Continuous Integration. Every push and pull request to the `main` branch triggers:
+- Node.js setup (v18 & v20)
+- Backend dependency installation
+- Automated API tests execution
 
 ## 👨‍💻 Author
 
