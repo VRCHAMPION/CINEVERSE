@@ -8,7 +8,10 @@ const IMG_BASE = "https://image.tmdb.org/t/p/w500"
 const IMG_ORIGINAL = "https://image.tmdb.org/t/p/original"
 
 // ===== BACKEND BASE =====
-const API_BASE = "https://cineverse-8je0.onrender.com"
+// Use relative path for Vercel deployment, falls back to Render for development
+const API_BASE = window.location.hostname === 'localhost' 
+  ? "http://localhost:3000" 
+  : "/api"
 
 // ===== GRADIENTS (fallback when no poster) =====
 const gradients = [

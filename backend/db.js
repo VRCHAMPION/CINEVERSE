@@ -7,9 +7,9 @@ const pool = new Pool({
 
 pool.query('SELECT NOW()', (err, res) => {
     if (err) {
-        console.error('❌ Connection Error:', err.message);
+        console.error(' Connection Error:', err.message);
     } else {
-        console.log('✅ Connected to Supabase! Time:', res.rows[0].now);
+        console.log(' Connected to Supabase! Time:', res.rows[0].now);
     }
 });
 

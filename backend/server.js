@@ -8,7 +8,7 @@ const app = express()
 app.use(helmet())
 
 app.use(cors({
-    origin: ['https://cineverse040406.netlify.app', 'http://localhost:3000'],
+    origin: ['https://cineverse040406.netlify.app', 'http://localhost:3000', /\.vercel\.app$/],
     methods: ['GET'],
 }))
 
