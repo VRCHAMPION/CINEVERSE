@@ -10,6 +10,7 @@ app.use(helmet())
 app.use(cors({
     origin: ['https://cineverse040406.netlify.app', 'http://localhost:3000', /\.vercel\.app$/],
     methods: ['GET'],
+    credentials: true
 }))
 
 app.use(express.json())
