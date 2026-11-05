@@ -2,6 +2,8 @@
 
 A full stack movie browsing website built with Node.js, Express, and PostgreSQL. Browse movies and TV series, search by title, filter by genre and year, and view detailed information for each title.
 
+**Live site:** https://cineverse040406.netlify.app/
+
 ---
 📊 Technical Achievements
 This project has been optimized for industrial-grade speed and reliability. Below are the verified Google Lighthouse scores(desktop) for the production environment:
